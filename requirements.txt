@@ -56,3 +56,5 @@ wrapt==1.17.2
 WTForms==3.2.1
 zopfli==0.2.3.post1
 zstandard==0.23.0
+Flask
+gunicorn
