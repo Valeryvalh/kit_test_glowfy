@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spa Management Assessment - Results</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container header-container">
+            <a href="{{ url_for('index') }}" class="logo">
+                <i class="fas fa-spa"></i> SpaAssess
+            </a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('quiz') }}">Take Assessment</a></li>
+                    {% if current_user.is_authenticated %}
+                        <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                    {% else %}
+                        <li><a href="{{ url_for('login') }}">Login</a></li>
+                        <li><a href="{{ url_for('register') }}">Register</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            <div class="header-controls">
+                <div class="language-switcher">
+                    <button class="{{ 'active' if session.get('language') == 'en' or not session.get('language') }}" onclick="window.location.href='{{ url_for('set_language', language='en') }}'">EN</button>
+                    <button class="{{ 'active' if session.get('language') == 'fr' }}" onclick="window.location.href='{{ url_for('set_language', language='fr') }}'">FR</button>
+                </div>
+                <button class="theme-toggle" id="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="results-container">
+            <div class="results-header">
+                <h2>Your Spa Management Assessment Results</h2>
+                <p>Based on your answers, we've analyzed your current management practices</p>
+            </div>
+            
+            <div class="results-score">
+                {% if result.score <= 40 %}
+                    <img src="{{ url_for('static', filename='images/icon_echec.png') }}" alt="Critical" class="score-icon">
+                    <div class="score-value text-danger">{{ result.score }}%</div>
+                    <div class="score-message">Your spa urgently needs our Management Information System (MIS).</div>
+                {% elif result.score <= 70 %}
+                    <img src="{{ url_for('static', filename='images/icon_juste.png') }}" alt="Needs Improvement" class="score-icon">
+                    <div class="score-value text-warning">{{ result.score }}%</div>
+                    <div class="score-message">Your spa is doing okay, but you would benefit from our MIS.</div>
+                {% else %}
+                    <img src="{{ url_for('static', filename='images/icon_bien.png') }}" alt="Good" class="score-icon">
+                    <div class="score-value text-success">{{ result.score }}%</div>
+                    <div class="score-message">Your spa is doing well, but our MIS can help you improve further.</div>
+                    
+                    <div class="badge-container mt-3">
+                        <div class="badge badge-success">
+                            <i class="fas fa-award"></i> Spa Strategy Star
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="topsis-score mt-4 mb-4 text-center">
+                <h3>TOPSIS Analysis Score: {{ "%.2f"|format(result.topsis_score * 100) }}%</h3>
+                <p>This score indicates how close your spa is to the ideal management system.</p>
+                
+                <div class="progress mt-2">
+                    <div class="progress-bar" style="width: {{ result.topsis_score * 100 }}%;"></div>
+                </div>
+            </div>
+            
+            <div class="results-chart">
+                <h3 class="text-center mb-3">Category Performance</h3>
+                <canvas id="radarChart"></canvas>
+            </div>
+            
+            <div class="industry-comparison mt-4">
+                <h3 class="text-center mb-3">Comparison to Industry Average</h3>
+                <canvas id="comparisonChart"></canvas>
+            </div>
+            
+            <div class="recommendations mt-4">
+                <h3 class="text-center mb-3">Personalized Recommendations</h3>
+                
+                {% for category, recommendation in result.recommendations.items() %}
+                    <div class="recommendation animate-fadeIn">
+                        <h4>{{ category }}</h4>
+                        <p>{{ recommendation }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <div class="results-actions mt-4">
+                <a href="{{ url_for('download_pdf', result_id=result.id) }}" class="btn btn-primary">
+                    <i class="fas fa-download"></i> Download PDF Report
+                </a>
+                <button id="email-btn" class="btn btn-secondary">
+                    <i class="fas fa-envelope"></i> Email Results
+                </button>
+                <button id="share-btn" class="btn">
+                    <i class="fas fa-share-alt"></i> Share Results
+                </button>
+                <a href="{{ url_for('quiz') }}" class="btn btn-accent">
+                    <i class="fas fa-redo"></i> Take Assessment Again
+                </a>
+            </div>
+            
+            <div class="improvement-wizard mt-5">
+                <h3 class="text-center mb-3">Improvement Wizard</h3>
+                <p class="text-center mb-4">Follow these steps to improve your spa management system:</p>
+                
+                <div class="wizard-steps">
+                    <div class="wizard-step">
+                        <div class="wizard-step-number">1</div>
+                        <div class="wizard-step-content">
+                            <h4>Identify Priority Areas</h4>
+                            <p>Based on your results, focus first on the categories with the lowest scores.</p>
+                        </div>
+                    </div>
+                    <div class="wizard-step">
+                        <div class="wizard-step-number">2</div>
+                        <div class="wizard-step-content">
+                            <h4>Implement MIS Solutions</h4>
+                            <p>Our Management Information System addresses all the identified issues.</p>
+                        </div>
+                    </div>
+                    <div class="wizard-step">
+                        <div class="wizard-step-number">3</div>
+                        <div class="wizard-step-content">
+                            <h4>Train Your Staff</h4>
+                            <p>Ensure your team is properly trained on the new system.</p>
+                        </div>
+                    </div>
+                    <div class="wizard-step">
+                        <div class="wizard-step-number">4</div>
+                        <div class="wizard-step-content">
+                            <h4>Monitor & Optimize</h4>
+                            <p>Regularly review performance metrics and make adjustments as needed.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="related-services mt-5 mb-5">
+            <h3 class="text-center mb-4">Recommended Services for Your Spa</h3>
+            
+            <div class="services-grid">
+                {% if result.score <= 40 %}
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <h4>Complete MIS Implementation</h4>
+                        <p>Our full-service implementation package includes setup, training, and ongoing support.</p>
+                        <a href="#" class="btn btn-sm">Learn More</a>
+                    </div>
+                {% elif result.score <= 70 %}
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <i class="fas fa-tools"></i>
+                        </div>
+                        <h4>MIS Upgrade Package</h4>
+                        <p>Enhance your existing systems with our targeted improvements.</p>
+                        <a href="#" class="btn btn-sm">Learn More</a>
+                    </div>
+                {% else %}
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h4>Performance Optimization</h4>
+                        <p>Fine-tune your already good systems to achieve excellence.</p>
+                        <a href="#" class="btn btn-sm">Learn More</a>
+                    </div>
+                {% endif %}
+                
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h4>Staff Training Program</h4>
+                    <p>Comprehensive training for your team on effective system usage.</p>
+                    <a href="#" class="btn btn-sm">Learn More</a>
+                </div>
+                
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h4>Ongoing Support</h4>
+                    <p>24/7 technical support and regular system updates.</p>
+                    <a href="#" class="btn btn-sm">Learn More</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Email Modal -->
+    <div id="email-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Email Your Results</h2>
+            <p>Enter your email address to receive a copy of your assessment results.</p>
+            
+            <form id="email-form" class="lead-form">
+                <div class="form-group">
+                    <label for="email-address">Email Address</label>
+                    <input type="email" id="email-address" name="email" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Send Results</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Share Modal -->
+    <div id="share-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Share Your Results</h2>
+            <p>Share your assessment results on social media.</p>
+            
+            <div class="social-share-buttons">
+                <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.url|urlencode }}" target="_blank" class="btn btn-facebook">
+                    <i class="fab fa-facebook-f"></i> Facebook
+                </a>
+                <a href="https://twitter.com/intent/tweet?url={{ request.url|urlencode }}&text=I%20just%20completed%20the%20Spa%20Management%20Assessment%20and%20scored%20{{ result.score }}%25!" target="_blank" class="btn btn-twitter">
+                    <i class="fab fa-twitter"></i> Twitter
+                </a>
+                <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ request.url|urlencode }}&title=My%20Spa%20Management%20Assessment%20Results&summary=I%20scored%20{{ result.score }}%25%20on%20the%20Spa%20Management%20Assessment!" target="_blank" class="btn btn-linkedin">
+                    <i class="fab fa-linkedin-in"></i> LinkedIn
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-container">
+                <div class="footer-column">
+                    <h3>SpaAssess</h3>
+                    <p>Helping spa businesses optimize operations and grow revenue through intelligent management systems.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="{{ url_for('index') }}">Home</a></li>
+                        <li><a href="{{ url_for('quiz') }}">Assessment</a></li>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul class="footer-links">
+                        <li><i class="fas fa-map-marker-alt"></i> 123 Spa Street, City, Country</li>
+                        <li><i class="fas fa-phone"></i> +1 (555) 123-4567</li>
+                        <li><i class="fas fa-envelope"></i> info@spaassess.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 SpaAssess. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const htmlElement = document.documentElement;
+        
+        // Check for saved theme preference or use default
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        htmlElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+        
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = htmlElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            htmlElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        });
+        
+        function updateThemeIcon(theme) {
+            const icon = themeToggle.querySelector('i');
+            if (theme === 'dark') {
+                icon.className = 'fas fa-sun';
+            } else {
+                icon.className = 'fas fa-moon';
+            }
+        }
+        
+        // Radar Chart
+        const radarCtx = document.getElementById('radarChart').getContext('2d');
+        const radarChart = new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+                labels: [
+                    'Appointment Management',
+                    'Client Communication',
+                    'Scheduling Efficiency',
+                    'Staff Coordination',
+                    'Business Growth'
+                ],
+                datasets: [{
+                    label: 'Your Score',
+                    data: [
+                        {{ category_scores[0] * 100 }},
+                        {{ category_scores[1] * 100 }},
+                        {{ category_scores[2] * 100 }},
+                        {{ category_scores[3] * 100 }},
+                        {{ category_scores[4] * 100 }}
+                    ],
+                    backgroundColor: 'rgba(106, 90, 205, 0.2)',
+                    borderColor: 'rgba(106, 90, 205, 1)',
+                    pointBackgroundColor: 'rgba(106, 90, 205, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(106, 90, 205, 1)'
+                }]
+            },
+            options: {
+                scales: {
+                    r: {
+                        angleLines: {
+                            display: true
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 100
+                    }
+                }
+            }
+        });
+        
+        // Comparison Chart
+        const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
+        const comparisonChart = new Chart(comparisonCtx, {
+            type: 'bar',
+            data: {
+                labels: [
+                    'Appointment Management',
+                    'Client Communication',
+                    'Scheduling Efficiency',
+                    'Staff Coordination',
+                    'Business Growth'
+                ],
+                datasets: [
+                    {
+                        label: 'Your Score',
+                        data: [
+                            {{ category_scores[0] * 100 }},
+                            {{ category_scores[1] * 100 }},
+                            {{ category_scores[2] * 100 }},
+                            {{ category_scores[3] * 100 }},
+                            {{ category_scores[4] * 100 }}
+                        ],
+                        backgroundColor: 'rgba(106, 90, 205, 0.7)'
+                    },
+                    {
+                        label: 'Industry Average',
+                        data: [
+                            {{ industry_avg[0] * 100 }},
+                            {{ industry_avg[1] * 100 }},
+                            {{ industry_avg[2] * 100 }},
+                            {{ industry_avg[3] * 100 }},
+                            {{ industry_avg[4] * 100 }}
+                        ],
+                        backgroundColor: 'rgba(143, 188, 143, 0.7)'
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+        
+        // Email modal functionality
+        const emailBtn = document.getElementById('email-btn');
+        const emailModal = document.getElementById('email-modal');
+        const emailForm = document.getElementById('email-form');
+        const emailCloseModal = emailModal.querySelector('.close-modal');
+        
+        emailBtn.addEventListener('click', () => {
+            emailModal.style.display = 'flex';
+        });
+        
+        emailCloseModal.addEventListener('click', () => {
+            emailModal.style.display = 'none';
+        });
+        
+        emailForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            
+            const email = document.getElementById('email-address').value;
+            
+            // Send email request to server
+            fetch('/send_email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    result_id: '{{ result.id }}'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Results have been sent to your email.');
+                    emailModal.style.display = 'none';
+                } else {
+                    alert('There was an error sending the email. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('There was an error sending the email. Please try again.');
+            });
+        });
+        
+        // Share modal functionality
+        const shareBtn = document.getElementById('share-btn');
+        const shareModal = document.getElementById('share-modal');
+        const shareCloseModal = shareModal.querySelector('.close-modal');
+        
+        shareBtn.addEventListener('click', () => {
+            shareModal.style.display = 'flex';
+        });
+        
+        shareCloseModal.addEventListener('click', () => {
+            shareModal.style.display = 'none';
+        });
+        
+        // Animation on scroll
+        document.addEventListener('DOMContentLoaded', function() {
+            const animatedElements = document.querySelectorAll('.animate-fadeIn');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = 1;
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            });
+            
+            animatedElements.forEach(element => {
+                element.style.opacity = 0;
+                element.style.transform = 'translateY(20px)';
+                element.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                observer.observe(element);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Spa Management Assessment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container header-container">
+            <a href="{{ url_for('index') }}" class="logo">
+                <i class="fas fa-spa"></i> SpaAssess
+            </a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('quiz') }}">Take Assessment</a></li>
+                    <li><a href="{{ url_for('login') }}">Login</a></li>
+                    <li><a href="{{ url_for('register') }}">Register</a></li>
+                </ul>
+            </nav>
+            <div class="header-controls">
+                <div class="language-switcher">
+                    <button class="{{ 'active' if session.get('language') == 'en' or not session.get('language') }}" onclick="window.location.href='{{ url_for('set_language', language='en') }}'">EN</button>
+                    <button class="{{ 'active' if session.get('language') == 'fr' }}" onclick="window.location.href='{{ url_for('set_language', language='fr') }}'">FR</button>
+                </div>
+                <button class="theme-toggle" id="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <h2>Create an Account</h2>
+                    <p>Track your assessment history and get personalized recommendations</p>
+                </div>
+                
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        <div class="alert alert-danger">
+                            {% for message in messages %}
+                                {{ message }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+                
+                <form method="POST" action="{{ url_for('register') }}" class="auth-form">
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm-password">Confirm Password</label>
+                        <input type="password" id="confirm-password" name="confirm_password" required>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="is_admin" id="is_admin">
+                            Register as Administrator
+                        </label>
+                    </div>
+                    <div class="form-group admin-key-group" style="display: none;">
+                        <label for="admin-key">Admin Registration Key</label>
+                        <input type="password" id="admin-key" name="admin_key">
+                        <small class="text-muted">Required for administrator accounts</small>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="terms" required>
+                            I agree to the Terms of Service and Privacy Policy
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Register</button>
+                </form>
+                
+                <div class="auth-footer">
+                    <p>Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-container">
+                <div class="footer-column">
+                    <h3>SpaAssess</h3>
+                    <p>Helping spa businesses optimize operations and grow revenue through intelligent management systems.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="{{ url_for('index') }}">Home</a></li>
+                        <li><a href="{{ url_for('quiz') }}">Assessment</a></li>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul class="footer-links">
+                        <li><i class="fas fa-map-marker-alt"></i> 123 Spa Street, City, Country</li>
+                        <li><i class="fas fa-phone"></i> +1 (555) 123-4567</li>
+                        <li><i class="fas fa-envelope"></i> info@spaassess.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 SpaAssess. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const htmlElement = document.documentElement;
+        
+        // Check for saved theme preference or use default
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        htmlElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+        
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = htmlElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            htmlElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        });
+        
+        function updateThemeIcon(theme) {
+            const icon = themeToggle.querySelector('i');
+            if (theme === 'dark') {
+                icon.className = 'fas fa-sun';
+            } else {
+                icon.className = 'fas fa-moon';
+            }
+        }
+        
+        // Password confirmation validation
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirm-password');
+        const form = document.querySelector('form');
+        
+        form.addEventListener('submit', (event) => {
+            if (passwordInput.value !== confirmPasswordInput.value) {
+                event.preventDefault();
+                alert('Passwords do not match. Please try again.');
+            }
+        });
+        
+        // Admin key toggle
+        const isAdminCheckbox = document.getElementById('is_admin');
+        const adminKeyGroup = document.querySelector('.admin-key-group');
+        const adminKeyInput = document.getElementById('admin-key');
+        
+        isAdminCheckbox.addEventListener('change', () => {
+            adminKeyGroup.style.display = isAdminCheckbox.checked ? 'block' : 'none';
+            adminKeyInput.required = isAdminCheckbox.checked;
+        });
+    </script>
+</body>
+</html>

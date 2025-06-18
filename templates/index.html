@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spa Management Assessment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container header-container">
+            <a href="{{ url_for('index') }}" class="logo">
+                <i class="fas fa-spa"></i> Glowfy_SpaAssess
+            </a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('quiz') }}">Take Assessment</a></li>
+                    {% if current_user.is_authenticated %}
+                        <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                    {% else %}
+                        <li><a href="{{ url_for('login') }}">Login</a></li>
+                        <li><a href="{{ url_for('register') }}">Register</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            <div class="header-controls">
+                <div class="language-switcher">
+                    <button class="{{ 'active' if session.get('language') == 'en' or not session.get('language') }}" onclick="window.location.href='{{ url_for('set_language', language='en') }}'">EN</button>
+                    <button class="{{ 'active' if session.get('language') == 'fr' }}" onclick="window.location.href='{{ url_for('set_language', language='fr') }}'">FR</button>
+                </div>
+                <button class="theme-toggle" id="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Evaluate Your Spa Management System</h1>
+            <p>Take our comprehensive assessment to identify areas for improvement and optimize your spa's operations.</p>
+            <a href="{{ url_for('quiz') }}" class="btn btn-accent">Start Assessment</a>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>Why Take Our Assessment?</h2>
+                <p>Discover how our Management Information System can transform your spa business</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h3>Reduce No-Shows</h3>
+                    <p>Automated reminders and confirmations can reduce appointment no-shows by up to 80%.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3>Save Time</h3>
+                    <p>Streamline booking and client management to save up to 15 hours per week.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Increase Revenue</h3>
+                    <p>Optimize scheduling and client retention to boost your revenue by up to 30%.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Improve Client Experience</h3>
+                    <p>Enhance communication and personalization to delight your clients.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="video-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>See Our System in Action</h2>
+                <p>Watch how our Management Information System can transform your spa operations</p>
+            </div>
+            <div class="video-container">
+                <video controls width="100%" poster="{{ url_for('static', filename='images/video-poster.jpg') }}">
+                    <source src="{{ url_for('static', filename='video/spa_video.mp4') }}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </div>
+    </section>
+
+    <section class="testimonials">
+        <div class="container">
+            <div class="testimonials-header">
+                <h2>What Our Clients Say</h2>
+                <p>Success stories from spa owners who have implemented our system</p>
+            </div>
+            <div class="testimonials-grid">
+                <div class="testimonial">
+                    <div class="testimonial-content">
+                        <p>"Since implementing this system, our no-show rate has dropped by 75% and our revenue has increased by 30%. The automated reminders have been a game-changer!"</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <img src="{{ url_for('static', filename='images/testimonial-1.jpg') }}" alt="Sarah Johnson">
+                        <div class="testimonial-author-info">
+                            <h4>Sarah Johnson</h4>
+                            <p>Serenity Spa, Owner</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-content">
+                        <p>"The client referral system has brought us dozens of new clients. Our staff loves how easy it is to manage appointments and communicate with clients."</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <img src="{{ url_for('static', filename='images/testimonial-2.jpg') }}" alt="Michael Chen">
+                        <div class="testimonial-author-info">
+                            <h4>Michael Chen</h4>
+                            <p>Zen Wellness Center, Manager</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-content">
+                        <p>"We've saved at least 15 hours per week on administrative tasks. The system paid for itself within the first month through increased bookings and efficiency."</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <img src="{{ url_for('static', filename='images/testimonial-3.jpg') }}" alt="Emma Rodriguez">
+                        <div class="testimonial-author-info">
+                            <h4>Emma Rodriguez</h4>
+                            <p>Oasis Day Spa, Director</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <div class="container">
+            <div class="section-header">
+                <h2>Ready to Transform Your Spa Business?</h2>
+                <p>Take our assessment today and discover how our Management Information System can help you grow.</p>
+                <a href="{{ url_for('quiz') }}" class="btn btn-primary">Start Assessment Now</a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-container">
+                <div class="footer-column">
+                    <h3>Glowfy_SpaAssess</h3>
+                    <p>Helping spa businesses optimize operations and grow revenue through intelligent management systems.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="{{ url_for('index') }}">Home</a></li>
+                        <li><a href="{{ url_for('quiz') }}">Assessment</a></li>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul class="footer-links">
+                        <li><i class="fas fa-map-marker-alt"></i>  Douala, Cameroon</li>
+                        <li><i class="fas fa-phone"></i> +237 692141053</li>
+                        <li><i class="fas fa-envelope"></i> sengavalery@gmail.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Glowfy_SpaAssess. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const htmlElement = document.documentElement;
+        
+        // Check for saved theme preference or use default
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        htmlElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+        
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = htmlElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            htmlElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        });
+        
+        function updateThemeIcon(theme) {
+            const icon = themeToggle.querySelector('i');
+            if (theme === 'dark') {
+                icon.className = 'fas fa-sun';
+            } else {
+                icon.className = 'fas fa-moon';
+            }
+        }
+        
+        // Animation on scroll
+        document.addEventListener('DOMContentLoaded', function() {
+            const animatedElements = document.querySelectorAll('.feature-card, .testimonial');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = 1;
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            });
+            
+            animatedElements.forEach(element => {
+                element.style.opacity = 0;
+                element.style.transform = 'translateY(20px)';
+                element.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                observer.observe(element);
+            });
+        });
+    </script>
+</body>
+</html>

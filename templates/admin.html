@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Spa Management Assessment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .admin-header {
+            background-color: var(--primary-dark);
+            color: var(--text-light);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 2rem;
+        }
+        
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background-color: #fff;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--box-shadow);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: var(--text-dark);
+            font-size: 0.9rem;
+        }
+        
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            align-items: center;
+        }
+        
+        .date-range {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .export-btn {
+            margin-left: auto;
+        }
+        
+        .chart-container {
+            background-color: #fff;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--box-shadow);
+            margin-bottom: 2rem;
+        }
+        
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .user-details {
+            display: none;
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin-top: 0.5rem;
+        }
+        
+        .user-row:hover {
+            cursor: pointer;
+            background-color: #f8f9fa;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .pagination-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            background-color: #fff;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .pagination-btn:hover,
+        .pagination-btn.active {
+            background-color: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container header-container">
+            <a href="{{ url_for('index') }}" class="logo">
+                <i class="fas fa-spa"></i> SpaAssess
+            </a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('quiz') }}">Take Assessment</a></li>
+                    <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                    <li><a href="{{ url_for('admin') }}">Admin</a></li>
+                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                </ul>
+            </nav>
+            <div class="header-controls">
+                <div class="language-switcher">
+                    <button class="{{ 'active' if session.get('language') == 'en' or not session.get('language') }}" onclick="window.location.href='{{ url_for('set_language', language='en') }}'">EN</button>
+                    <button class="{{ 'active' if session.get('language') == 'fr' }}" onclick="window.location.href='{{ url_for('set_language', language='fr') }}'">FR</button>
+                </div>
+                <button class="theme-toggle" id="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container dashboard">
+        <div class="admin-header">
+            <h2><i class="fas fa-lock"></i> Admin Dashboard</h2>
+            <p>Manage and analyze all assessment data</p>
+        </div>
+        
+        <div class="admin-stats">
+            <div class="stat-card">
+                <div class="stat-value">{{ results|length }}</div>
+                <div class="stat-label">Total Assessments</div>
+            </div>
+            
+            {% if results %}
+                <div class="stat-card">
+                    <div class="stat-value">{{ "%.1f"|format(results|map(attribute='score')|sum / results|length) }}%</div>
+                    <div class="stat-label">Average Score</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-value">{{ results|selectattr('score', '<=', 40)|list|length }}</div>
+                    <div class="stat-label">Critical Assessments</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-value">{{ results|selectattr('score', '>', 70)|list|length }}</div>
+                    <div class="stat-label">Good Assessments</div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="chart-grid">
+            <div class="chart-container">
+                <h3>Assessment Results Distribution</h3>
+                <canvas id="resultsDistributionChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <h3>Category Performance</h3>
+                <canvas id="categoryPerformanceChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <h3>Assessments Over Time</h3>
+                <canvas id="timelineChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <h3>TOPSIS Score Distribution</h3>
+                <canvas id="topsisChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="dashboard-card">
+            <h3>All Assessment Results</h3>
+            
+            <div class="filter-row">
+                <div class="form-group" style="width: 200px;">
+                    <select id="score-filter" class="form-control">
+                        <option value="all">All Scores</option>
+                        <option value="critical">Critical (≤ 40%)</option>
+                        <option value="needs-improvement">Needs Improvement (41-70%)</option>
+                        <option value="good">Good (> 70%)</option>
+                    </select>
+                </div>
+                
+                <div class="date-range">
+                    <div class="form-group" style="width: 150px;">
+                        <input type="date" id="date-from" class="form-control">
+                    </div>
+                    <span>to</span>
+                    <div class="form-group" style="width: 150px;">
+                        <input type="date" id="date-to" class="form-control">
+                    </div>
+                </div>
+                
+                <button id="apply-filters" class="btn btn-sm">Apply Filters</button>
+                <button id="reset-filters" class="btn btn-sm">Reset</button>
+                
+                <button id="export-csv" class="btn btn-primary btn-sm export-btn">
+                    <i class="fas fa-download"></i> Export CSV
+                </button>
+            </div>
+            
+            {% if results %}
+                <div class="table-responsive">
+                    <table class="dashboard-table" id="results-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>User</th>
+                                <th>Score</th>
+                                <th>TOPSIS Score</th>
+                                <th>Category</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result in results %}
+                                <tr class="user-row" data-id="{{ result.id }}">
+                                    <td>{{ result.timestamp }}</td>
+                                    <td>
+                                        {% if result.lead_data and result.lead_data.name %}
+                                            {{ result.lead_data.name }}
+                                        {% elif result.user_id %}
+                                            User #{{ result.user_id[:8] }}
+                                        {% else %}
+                                            Anonymous
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ result.score }}%</td>
+                                    <td>{{ "%.2f"|format(result.topsis_score * 100) }}%</td>
+                                    <td>
+                                        {% if result.score <= 40 %}
+                                            <span class="badge badge-danger">Critical</span>
+                                        {% elif result.score <= 70 %}
+                                            <span class="badge badge-warning">Needs Improvement</span>
+                                        {% else %}
+                                            <span class="badge badge-success">Good</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('results', result_id=result.id) }}" class="btn btn-sm">View</a>
+                                        <a href="{{ url_for('download_pdf', result_id=result.id) }}" class="btn btn-sm">PDF</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="6" class="user-details" id="details-{{ result.id }}">
+                                        <div class="details-grid">
+                                            <div class="details-section">
+                                                <h4>User Information</h4>
+                                                {% if result.lead_data %}
+                                                    <p><strong>Name:</strong> {{ result.lead_data.name }}</p>
+                                                    <p><strong>Email:</strong> {{ result.lead_data.email }}</p>
+                                                    <p><strong>Phone:</strong> {{ result.lead_data.phone or 'Not provided' }}</p>
+                                                {% else %}
+                                                    <p>No user information available</p>
+                                                {% endif %}
+                                            </div>
+                                            <div class="details-section">
+                                                <h4>Answers</h4>
+                                                <ul>
+                                                    <li>Q1: {{ 'Yes' if result.answers[0] == 1 else 'No' }}</li>
+                                                    <li>Q2: {{ 'Yes' if result.answers[1] == 1 else 'No' }}</li>
+                                                    <li>Q3: {{ 'Yes' if result.answers[2] == 1 else 'No' }}</li>
+                                                    <li>Q4: {{ 'Yes' if result.answers[3] == 1 else 'No' }}</li>
+                                                    <li>Q5: {{ 'Yes' if result.answers[4] == 1 else 'No' }}</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="pagination" id="pagination">
+                    <!-- Pagination will be generated by JavaScript -->
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <p>No assessment results available yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-container">
+                <div class="footer-column">
+                    <h3>SpaAssess</h3>
+                    <p>Helping spa businesses optimize operations and grow revenue through intelligent management systems.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="{{ url_for('index') }}">Home</a></li>
+                        <li><a href="{{ url_for('quiz') }}">Assessment</a></li>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul class="footer-links">
+                        <li><i class="fas fa-map-marker-alt"></i> 123 Spa Street, City, Country</li>
+                        <li><i class="fas fa-phone"></i> +1 (555) 123-4567</li>
+                        <li><i class="fas fa-envelope"></i> info@spaassess.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 SpaAssess. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const htmlElement = document.documentElement;
+        
+        // Check for saved theme preference or use default
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        htmlElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+        
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = htmlElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            htmlElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        });
+        
+        function updateThemeIcon(theme) {
+            const icon = themeToggle.querySelector('i');
+            if (theme === 'dark') {
+                icon.className = 'fas fa-sun';
+            } else {
+                icon.className = 'fas fa-moon';
+            }
+        }
+        
+        // Charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Results Distribution Chart
+            const resultsDistributionCtx = document.getElementById('resultsDistributionChart').getContext('2d');
+            const resultsDistributionChart = new Chart(resultsDistributionCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Critical (≤40%)', 'Needs Improvement (41-70%)', 'Good (>70%)'],
+                    datasets: [{
+                        data: [
+                            {{ results|selectattr('score', '<=', 40)|list|length }},
+                            {{ results|selectattr('score', '>', 40)|selectattr('score', '<=', 70)|list|length }},
+                            {{ results|selectattr('score', '>', 70)|list|length }}
+                        ],
+                        backgroundColor: ['#dc3545', '#ffc107', '#28a745'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // Category Performance Chart
+            const categoryPerformanceCtx = document.getElementById('categoryPerformanceChart').getContext('2d');
+            
+            // Calculate average scores per category
+            const categoryScores = [0, 0, 0, 0, 0];
+            {% for result in results %}
+                {% for i in range(5) %}
+                    categoryScores[{{ i }}] += {{ result.answers[i] }};
+                {% endfor %}
+            {% endfor %}
+            
+            // Calculate averages
+            const totalResults = {{ results|length or 1 }};
+            for (let i = 0; i < categoryScores.length; i++) {
+                categoryScores[i] = (categoryScores[i] / totalResults) * 100;
+            }
+            
+            const categoryPerformanceChart = new Chart(categoryPerformanceCtx, {
+                type: 'bar',
+                data: {
+                    labels: [
+                        'Appointment Management',
+                        'Client Communication',
+                        'Scheduling Efficiency',
+                        'Staff Coordination',
+                        'Business Growth'
+                    ],
+                    datasets: [{
+                        label: 'Average Score (%)',
+                        data: categoryScores,
+                        backgroundColor: 'rgba(106, 90, 205, 0.7)',
+                        borderColor: 'rgba(106, 90, 205, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+            
+            // Timeline Chart
+            const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+            
+            // Prepare data for timeline chart
+            const dates = [];
+            const scores = [];
+            
+            {% for result in results|sort(attribute='timestamp') %}
+                dates.push('{{ result.timestamp.split(" ")[0] }}');
+                scores.push({{ result.score }});
+            {% endfor %}
+            
+            const timelineChart = new Chart(timelineCtx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Assessment Score (%)',
+                        data: scores,
+                        fill: false,
+                        borderColor: 'rgba(106, 90, 205, 1)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+            
+            // TOPSIS Chart
+            const topsisCtx = document.getElementById('topsisChart').getContext('2d');
+            
+            // Prepare data for TOPSIS chart
+            const topsisScores = [];
+            
+            {% for result in results %}
+                topsisScores.push({{ result.topsis_score * 100 }});
+            {% endfor %}
+            
+            // Create histogram data
+            const topsisRanges = ['0-20%', '21-40%', '41-60%', '61-80%', '81-100%'];
+            const topsisHistogram = [0, 0, 0, 0, 0];
+            
+            topsisScores.forEach(score => {
+                if (score <= 20) topsisHistogram[0]++;
+                else if (score <= 40) topsisHistogram[1]++;
+                else if (score <= 60) topsisHistogram[2]++;
+                else if (score <= 80) topsisHistogram[3]++;
+                else topsisHistogram[4]++;
+            });
+            
+            const topsisChart = new Chart(topsisCtx, {
+                type: 'bar',
+                data: {
+                    labels: topsisRanges,
+                    datasets: [{
+                        label: 'Number of Assessments',
+                        data: topsisHistogram,
+                        backgroundColor: 'rgba(143, 188, 143, 0.7)',
+                        borderColor: 'rgba(143, 188, 143, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Table functionality
+            const userRows = document.querySelectorAll('.user-row');
+            userRows.forEach(row => {
+                row.addEventListener('click', () => {
+                    const id = row.getAttribute('data-id');
+                    const detailsRow = document.getElementById(`details-${id}`);
+                    
+                    // Close all other detail rows
+                    document.querySelectorAll('.user-details').forEach(detail => {
+                        if (detail.id !== `details-${id}`) {
+                            detail.style.display = 'none';
+                        }
+                    });
+                    
+                    // Toggle current detail row
+                    detailsRow.style.display = detailsRow.style.display === 'block' ? 'none' : 'block';
+                });
+            });
+            
+            // Pagination
+            const table = document.getElementById('results-table');
+            const pagination = document.getElementById('pagination');
+            const rowsPerPage = 10;
+            const rows = table.querySelectorAll('tbody tr.user-row');
+            const detailRows = table.querySelectorAll('tbody tr:not(.user-row)');
+            const pageCount = Math.ceil(rows.length / rowsPerPage);
+            
+            function showPage(pageNum) {
+                // Hide all rows
+                rows.forEach((row, index) => {
+                    const shouldShow = index >= (pageNum - 1) * rowsPerPage && index < pageNum * rowsPerPage;
+                    row.style.display = shouldShow ? '' : 'none';
+                    
+                    // Also hide/show the corresponding detail row
+                    if (index < detailRows.length) {
+                        detailRows[index].style.display = shouldShow ? '' : 'none';
+                        // Make sure details are hidden
+                        const detailContent = detailRows[index].querySelector('.user-details');
+                        if (detailContent) detailContent.style.display = 'none';
+                    }
+                });
+                
+                // Update active page button
+                document.querySelectorAll('.pagination-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.textContent == pageNum) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+            
+            // Generate pagination buttons
+            if (pageCount > 1) {
+                // Previous button
+                const prevBtn = document.createElement('button');
+                prevBtn.className = 'pagination-btn';
+                prevBtn.innerHTML = '&laquo;';
+                prevBtn.addEventListener('click', () => {
+                    const activePage = document.querySelector('.pagination-btn.active');
+                    if (activePage && activePage.textContent > 1) {
+                        showPage(parseInt(activePage.textContent) - 1);
+                    }
+                });
+                pagination.appendChild(prevBtn);
+                
+                // Page buttons
+                for (let i = 1; i <= pageCount; i++) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.className = 'pagination-btn';
+                    pageBtn.textContent = i;
+                    if (i === 1) pageBtn.classList.add('active');
+                    pageBtn.addEventListener('click', () => showPage(i));
+                    pagination.appendChild(pageBtn);
+                }
+                
+                // Next button
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'pagination-btn';
+                nextBtn.innerHTML = '&raquo;';
+                nextBtn.addEventListener('click', () => {
+                    const activePage = document.querySelector('.pagination-btn.active');
+                    if (activePage && parseInt(activePage.textContent) < pageCount) {
+                        showPage(parseInt(activePage.textContent) + 1);
+                    }
+                });
+                pagination.appendChild(nextBtn);
+                
+                // Show first page
+                showPage(1);
+            }
+            
+            // Filtering
+            const scoreFilter = document.getElementById('score-filter');
+            const dateFrom = document.getElementById('date-from');
+            const dateTo = document.getElementById('date-to');
+            const applyFiltersBtn = document.getElementById('apply-filters');
+            const resetFiltersBtn = document.getElementById('reset-filters');
+            
+            applyFiltersBtn.addEventListener('click', applyFilters);
+            resetFiltersBtn.addEventListener('click', resetFilters);
+            
+            function applyFilters() {
+                const scoreValue = scoreFilter.value;
+                const fromDate = dateFrom.value ? new Date(dateFrom.value) : null;
+                const toDate = dateTo.value ? new Date(dateTo.value) : null;
+                
+                rows.forEach((row, index) => {
+                    const score = parseFloat(row.querySelector('td:nth-child(3)').textContent);
+                    const dateStr = row.querySelector('td:nth-child(1)').textContent;
+                    const rowDate = new Date(dateStr);
+                    
+                    let showRow = true;
+                    
+                    // Apply score filter
+                    if (scoreValue !== 'all') {
+                        if (scoreValue === 'critical' && score > 40) showRow = false;
+                        if (scoreValue === 'needs-improvement' && (score <= 40 || score > 70)) showRow = false;
+                        if (scoreValue === 'good' && score <= 70) showRow = false;
+                    }
+                    
+                    // Apply date filters
+                    if (fromDate && rowDate < fromDate) showRow = false;
+                    if (toDate && rowDate > toDate) showRow = false;
+                    
+                    // Show/hide row
+                    row.style.display = showRow ? '' : 'none';
+                    
+                    // Also hide/show the corresponding detail row
+                    if (index < detailRows.length) {
+                        detailRows[index].style.display = showRow ? '' : 'none';
+                        // Make sure details are hidden
+                        const detailContent = detailRows[index].querySelector('.user-details');
+                        if (detailContent) detailContent.style.display = 'none';
+                    }
+                });
+            }
+            
+            function resetFilters() {
+                scoreFilter.value = 'all';
+                dateFrom.value = '';
+                dateTo.value = '';
+                
+                // Show all rows
+                rows.forEach((row, index) => {
+                    row.style.display = '';
+                    if (index < detailRows.length) {
+                        detailRows[index].style.display = '';
+                        // Make sure details are hidden
+                        const detailContent = detailRows[index].querySelector('.user-details');
+                        if (detailContent) detailContent.style.display = 'none';
+                    }
+                });
+                
+                // Reset pagination
+                if (pageCount > 1) {
+                    showPage(1);
+                }
+            }
+            
+            // Export to CSV
+            const exportBtn = document.getElementById('export-csv');
+            exportBtn.addEventListener('click', exportToCSV);
+            
+            function exportToCSV() {
+                // Headers
+                let csv = 'Date,User,Score,TOPSIS Score,Category\n';
+                
+                // Data
+                rows.forEach(row => {
+                    if (row.style.display !== 'none') {
+                        const date = row.querySelector('td:nth-child(1)').textContent;
+                        const user = row.querySelector('td:nth-child(2)').textContent.trim();
+                        const score = row.querySelector('td:nth-child(3)').textContent;
+                        const topsis = row.querySelector('td:nth-child(4)').textContent;
+                        const category = row.querySelector('td:nth-child(5) span').textContent;
+                        
+                        csv += `"${date}","${user}","${score}","${topsis}","${category}"\n`;
+                    }
+                });
+                
+                // Create download link
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'spa_assessment_results.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        });
+    </script>
+</body>
+</html>

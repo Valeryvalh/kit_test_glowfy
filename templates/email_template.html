@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Spa Management Assessment Results</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            background: linear-gradient(135deg, #6a5acd, #483d8b);
+            color: #fff;
+            border-radius: 8px 8px 0 0;
+            margin: -20px -20px 20px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .score-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .score-value {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .score-message {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        
+        .critical {
+            color: #dc3545;
+        }
+        
+        .warning {
+            color: #ffc107;
+        }
+        
+        .success {
+            color: #28a745;
+        }
+        
+        .recommendations {
+            margin: 30px 0;
+        }
+        
+        .recommendation {
+            background-color: #f8f9fa;
+            border-left: 4px solid #6a5acd;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .recommendation h3 {
+            margin-top: 0;
+            color: #483d8b;
+        }
+        
+        .cta-button {
+            display: block;
+            text-align: center;
+            background-color: #6a5acd;
+            color: #fff;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin: 30px auto;
+            width: 200px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .social-links {
+            margin: 15px 0;
+        }
+        
+        .social-link {
+            display: inline-block;
+            margin: 0 10px;
+            color: #6a5acd;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Your Spa Management Assessment Results</h1>
+        </div>
+        
+        <p>Thank you for completing the Spa Management Assessment. Here are your results:</p>
+        
+        <div class="score-section">
+            {% if result.score <= 40 %}
+                <div class="score-value critical">{{ result.score }}%</div>
+                <div class="score-message critical">Your spa urgently needs our Management Information System (MIS).</div>
+            {% elif result.score <= 70 %}
+                <div class="score-value warning">{{ result.score }}%</div>
+                <div class="score-message warning">Your spa is doing okay, but you would benefit from our MIS.</div>
+            {% else %}
+                <div class="score-value success">{{ result.score }}%</div>
+                <div class="score-message success">Your spa is doing well, but our MIS can help you improve further.</div>
+            {% endif %}
+        </div>
+        
+        <div class="recommendations">
+            <h2>Personalized Recommendations</h2>
+            
+            {% for category, recommendation in result.recommendations.items() %}
+                <div class="recommendation">
+                    <h3>{{ category }}</h3>
+                    <p>{{ recommendation }}</p>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <a href="{{ url_for('results', result_id=result.id, _external=True) }}" class="cta-button">View Full Results</a>
+        
+        <div class="footer">
+            <p>SpaAssess - Helping spa businesses optimize operations and grow revenue.</p>
+            <div class="social-links">
+                <a href="#" class="social-link">Facebook</a>
+                <a href="#" class="social-link">Twitter</a>
+                <a href="#" class="social-link">LinkedIn</a>
+            </div>
+            <p>© 2023 SpaAssess. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

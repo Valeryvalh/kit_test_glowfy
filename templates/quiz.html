@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spa Management Assessment - Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container header-container">
+            <a href="{{ url_for('index') }}" class="logo">
+                <i class="fas fa-spa"></i> SpaAssess
+            </a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('quiz') }}">Take Assessment</a></li>
+                    {% if current_user.is_authenticated %}
+                        <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                    {% else %}
+                        <li><a href="{{ url_for('login') }}">Login</a></li>
+                        <li><a href="{{ url_for('register') }}">Register</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            <div class="header-controls">
+                <div class="language-switcher">
+                    <button class="{{ 'active' if session.get('language') == 'en' or not session.get('language') }}" onclick="window.location.href='{{ url_for('set_language', language='en') }}'">EN</button>
+                    <button class="{{ 'active' if session.get('language') == 'fr' }}" onclick="window.location.href='{{ url_for('set_language', language='fr') }}'">FR</button>
+                </div>
+                <button class="theme-toggle" id="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="quiz-container">
+            <div class="quiz-header">
+                <h2>Spa Management Assessment</h2>
+                <p>Answer these 5 questions to evaluate your current management practices</p>
+            </div>
+            
+            <div class="quiz-progress">
+                <div class="quiz-progress-bar" id="progress-bar" style="width: 0%"></div>
+            </div>
+            
+            <div class="quiz-timer" id="quiz-timer">
+                Time remaining: <span id="timer">5:00</span>
+            </div>
+            
+            <div id="quiz-content">
+                <!-- Questions will be dynamically inserted here -->
+            </div>
+            
+            <div class="quiz-navigation">
+                <button class="btn" id="prev-btn" style="display: none;">Previous</button>
+                <button class="btn btn-primary" id="next-btn">Next</button>
+                <button class="btn btn-accent" id="submit-btn" style="display: none;">Submit Answers</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Lead Form Modal -->
+    <div id="lead-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Almost There!</h2>
+            <p>Please provide your information to receive your personalized assessment results.</p>
+            
+            <form id="lead-form" class="lead-form">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" name="phone">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="consent" required>
+                        I consent to receive communications about spa management solutions
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary">View My Results</button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-container">
+                <div class="footer-column">
+                    <h3>SpaAssess</h3>
+                    <p>Helping spa businesses optimize operations and grow revenue through intelligent management systems.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="{{ url_for('index') }}">Home</a></li>
+                        <li><a href="{{ url_for('quiz') }}">Assessment</a></li>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul class="footer-links">
+                        <li><i class="fas fa-map-marker-alt"></i> 123 Spa Street, City, Country</li>
+                        <li><i class="fas fa-phone"></i> +1 (555) 123-4567</li>
+                        <li><i class="fas fa-envelope"></i> info@spaassess.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 SpaAssess. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Quiz data
+        const questions = [
+            {
+                id: 1,
+                text: "Do you often deal with clients who miss appointments?",
+                category: "Appointment Management"
+            },
+            {
+                id: 2,
+                text: "Do you manually remind clients before their session?",
+                category: "Client Communication"
+            },
+            {
+                id: 3,
+                text: "Do you sometimes double-book or forget bookings?",
+                category: "Scheduling Efficiency"
+            },
+            {
+                id: 4,
+                text: "Do your staff members know about new bookings immediately?",
+                category: "Staff Coordination"
+            },
+            {
+                id: 5,
+                text: "Do you have a client referral system?",
+                category: "Business Growth"
+            }
+        ];
+        
+        // Quiz state
+        let currentQuestion = 0;
+        const answers = Array(questions.length).fill(null);
+        let timerInterval;
+        let timeLeft = 300; // 5 minutes in seconds
+        
+        // DOM elements
+        const quizContent = document.getElementById('quiz-content');
+        const progressBar = document.getElementById('progress-bar');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const timerElement = document.getElementById('timer');
+        const leadModal = document.getElementById('lead-modal');
+        const leadForm = document.getElementById('lead-form');
+        const closeModal = document.querySelector('.close-modal');
+        
+        // Initialize quiz
+        function initQuiz() {
+            // Check for saved progress
+            const savedProgress = localStorage.getItem('quizProgress');
+            if (savedProgress) {
+                const progress = JSON.parse(savedProgress);
+                currentQuestion = progress.currentQuestion;
+                for (let i = 0; i < progress.answers.length; i++) {
+                    answers[i] = progress.answers[i];
+                }
+                timeLeft = progress.timeLeft || 300;
+            }
+            
+            showQuestion(currentQuestion);
+            updateProgressBar();
+            startTimer();
+            
+            // Event listeners
+            prevBtn.addEventListener('click', showPreviousQuestion);
+            nextBtn.addEventListener('click', showNextQuestion);
+            submitBtn.addEventListener('click', submitQuiz);
+            closeModal.addEventListener('click', () => {
+                leadModal.style.display = 'none';
+            });
+            leadForm.addEventListener('submit', handleLeadSubmit);
+            
+            // Save progress when leaving page
+            window.addEventListener('beforeunload', saveProgress);
+        }
+        
+        // Show current question
+        function showQuestion(index) {
+            const question = questions[index];
+            
+            quizContent.innerHTML = `
+                <div class="question animate-fadeIn">
+                    <h3>${index + 1}. ${question.text}</h3>
+                    <p class="question-category">Category: ${question.category}</p>
+                    <div class="options">
+                        <label class="option ${answers[index] === 'Yes' ? 'selected' : ''}">
+                            <input type="radio" name="q${question.id}" value="Yes" ${answers[index] === 'Yes' ? 'checked' : ''}>
+                            Yes
+                        </label>
+                        <label class="option ${answers[index] === 'No' ? 'selected' : ''}">
+                            <input type="radio" name="q${question.id}" value="No" ${answers[index] === 'No' ? 'checked' : ''}>
+                            No
+                        </label>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listeners to options
+            const options = document.querySelectorAll('.option');
+            options.forEach(option => {
+                option.addEventListener('click', () => {
+                    const radio = option.querySelector('input[type="radio"]');
+                    radio.checked = true;
+                    
+                    // Update selected state
+                    options.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+                    
+                    // Save answer
+                    answers[currentQuestion] = radio.value;
+                    
+                    // Enable next button
+                    nextBtn.disabled = false;
+                });
+            });
+            
+            // Update navigation buttons
+            prevBtn.style.display = index > 0 ? 'block' : 'none';
+            nextBtn.style.display = index < questions.length - 1 ? 'block' : 'none';
+            submitBtn.style.display = index === questions.length - 1 ? 'block' : 'none';
+            
+            // Disable next button if no answer selected
+            nextBtn.disabled = answers[currentQuestion] === null;
+        }
+        
+        // Show previous question
+        function showPreviousQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                showQuestion(currentQuestion);
+                updateProgressBar();
+            }
+        }
+        
+        // Show next question
+        function showNextQuestion() {
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                showQuestion(currentQuestion);
+                updateProgressBar();
+            }
+        }
+        
+        // Update progress bar
+        function updateProgressBar() {
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+        
+        // Start timer
+        function startTimer() {
+            updateTimerDisplay();
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert('Time is up! Please submit your answers now.');
+                    submitQuiz();
+                } else if (timeLeft <= 60) {
+                    document.getElementById('quiz-timer').classList.add('danger');
+                } else if (timeLeft <= 120) {
+                    document.getElementById('quiz-timer').classList.add('warning');
+                }
+            }, 1000);
+        }
+        
+        // Update timer display
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Save progress
+        function saveProgress() {
+            const progress = {
+                currentQuestion,
+                answers,
+                timeLeft
+            };
+            
+            localStorage.setItem('quizProgress', JSON.stringify(progress));
+        }
+        
+        // Submit quiz
+        function submitQuiz() {
+            // Check if all questions are answered
+            const unanswered = answers.findIndex(answer => answer === null);
+            
+            if (unanswered !== -1) {
+                alert(`Please answer question ${unanswered + 1} before submitting.`);
+                currentQuestion = unanswered;
+                showQuestion(currentQuestion);
+                updateProgressBar();
+                return;
+            }
+            
+            // Stop timer
+            clearInterval(timerInterval);
+            
+            // Show lead form
+            leadModal.style.display = 'flex';
+        }
+        
+        // Handle lead form submission
+        function handleLeadSubmit(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(leadForm);
+            const leadData = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                phone: formData.get('phone'),
+                consent: formData.get('consent') ? true : false
+            };
+            
+            // Submit answers to server
+            fetch('/submit_quiz', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    answers: answers,
+                    leadData: leadData
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Clear saved progress
+                    localStorage.removeItem('quizProgress');
+                    
+                    // Redirect to results page
+                    window.location.href = `/results/${data.result_id}`;
+                } else {
+                    alert('There was an error submitting your answers. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('There was an error submitting your answers. Please try again.');
+            });
+        }
+        
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const htmlElement = document.documentElement;
+        
+        // Check for saved theme preference or use default
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        htmlElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+        
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = htmlElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            htmlElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        });
+        
+        function updateThemeIcon(theme) {
+            const icon = themeToggle.querySelector('i');
+            if (theme === 'dark') {
+                icon.className = 'fas fa-sun';
+            } else {
+                icon.className = 'fas fa-moon';
+            }
+        }
+        
+        // Initialize quiz when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initQuiz);
+    </script>
+</body>
+</html>
